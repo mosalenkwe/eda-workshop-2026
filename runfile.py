@@ -1,41 +1,70 @@
 import streamlit as st
 import pandas as pd
+import io
 
+# -------------------------------
+# Page Config
+# -------------------------------
+st.set_page_config(page_title="EDA Dashboard", layout="wide")
+
+# -------------------------------
 # Title
-st.title("EDA Dashboard: Odonata Colour Change")
+# -------------------------------
+st.title("EDA Dashboard: Odonata Colour Change 🐉")
+st.write("Upload your dataset and explore it interactively.")
 
-# File uploader
-uploaded_file = st.file_uploader("Upload your dataset (CSV)", type=["csv"])
+# -------------------------------
+# File Upload
+# -------------------------------
+uploaded_file = st.file_uploader("Upload your CSV file", type=["csv"])
 
 if uploaded_file is not None:
-    df = pd.read_csv(uploaded_file, sep=";")
+    try:
+        df = pd.read_csv(uploaded_file, sep=";")
 
-    # Show raw data
-    st.subheader("Dataset Preview")
-    st.dataframe(df.head())
+        # -------------------------------
+        # Data Preview
+        # -------------------------------
+        st.subheader("📊 Dataset Preview")
+        st.dataframe(df.head())
 
-    # Basic info
-    st.subheader("Dataset Info")
-    buffer = []
-    df.info(buf=buffer)
-    st.text(str(buffer))
+        # -------------------------------
+        # Dataset Info (FIXED)
+        # -------------------------------
+        st.subheader("📌 Dataset Info")
+        buffer = io.StringIO()
+        df.info(buf=buffer)
+        info_str = buffer.getvalue()
+        st.code(info_str)
 
-    # Describe
-    st.subheader("Summary Statistics")
-    st.write(df.describe())
+        # -------------------------------
+        # Summary Statistics
+        # -------------------------------
+        st.subheader("📈 Summary Statistics")
+        st.write(df.describe())
 
-    # Missing values
-    st.subheader("Missing Values")
-    st.write(df.isnull().sum())
+        # -------------------------------
+        # Missing Values
+        # -------------------------------
+        st.subheader("⚠️ Missing Values")
+        missing = df.isnull().sum()
+        st.write(missing)
 
-    # Optional: column selection
-    st.subheader("Select Column to Explore")
-    column = st.selectbox("Choose a column", df.columns)
+        # -------------------------------
+        # Column Exploration
+        # -------------------------------
+        st.subheader("🔍 Explore a Column")
+        column = st.selectbox("Select a column", df.columns)
 
-    if df[column].dtype != "object":
-        st.line_chart(df[column])
-    else:
-        st.write(df[column].value_counts())
+        if df[column].dtype != "object":
+            st.write(f"### Distribution of {column}")
+            st.line_chart(df[column])
+        else:
+            st.write(f"### Value Counts for {column}")
+            st.write(df[column].value_counts())
+
+    except Exception as e:
+        st.error(f"Error loading file: {e}")
 
 else:
-    st.info("Please upload a CSV file to begin.")
+    st.info("👆 Please upload a CSV file to begin.")
