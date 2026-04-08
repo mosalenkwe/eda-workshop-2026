@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import io
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 # -------------------------------
 # Page Config
@@ -29,7 +31,7 @@ if uploaded_file is not None:
         st.dataframe(df.head())
 
         # -------------------------------
-        # Dataset Info (FIXED)
+        # Dataset Info
         # -------------------------------
         st.subheader("📌 Dataset Info")
         buffer = io.StringIO()
@@ -47,8 +49,24 @@ if uploaded_file is not None:
         # Missing Values
         # -------------------------------
         st.subheader("⚠️ Missing Values")
-        missing = df.isnull().sum()
-        st.write(missing)
+        st.write(df.isnull().sum())
+
+        # -------------------------------
+        # Correlation Heatmap
+        # -------------------------------
+        st.subheader("📊 Correlation Matrix")
+
+        numeric_df = df.select_dtypes(include=['number'])
+
+        if not numeric_df.empty:
+            corr = numeric_df.corr()
+
+            fig, ax = plt.subplots()
+            sns.heatmap(corr, annot=True, cmap="coolwarm", ax=ax)
+
+            st.pyplot(fig)
+        else:
+            st.warning("No numeric columns available for correlation analysis.")
 
         # -------------------------------
         # Column Exploration
@@ -56,12 +74,15 @@ if uploaded_file is not None:
         st.subheader("🔍 Explore a Column")
         column = st.selectbox("Select a column", df.columns)
 
+        fig, ax = plt.subplots()
+
         if df[column].dtype != "object":
-            st.write(f"### Distribution of {column}")
-            st.line_chart(df[column])
+            sns.histplot(df[column], kde=True, ax=ax)
+            st.pyplot(fig)
         else:
-            st.write(f"### Value Counts for {column}")
-            st.write(df[column].value_counts())
+            sns.countplot(x=df[column], ax=ax)
+            plt.xticks(rotation=45)
+            st.pyplot(fig)
 
     except Exception as e:
         st.error(f"Error loading file: {e}")
